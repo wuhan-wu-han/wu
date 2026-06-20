@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:wu_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true       # 可在浏览器访问 http://localhost:8080/h2-console
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create    # 每次启动自动建表，方便检查表结构
+    show-sql: true        # 控制台打印 DDL，确认生成正确
+    properties:
+      hibernate:
+        format_sql: true

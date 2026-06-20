@@ -1,0 +1,11 @@
+com\wu\entity\Team$TeamBuilder.class
+com\wu\entity\Team.class
+com\wu\enums\UnitType.class
+com\wu\entity\Player$PlayerBuilder.class
+com\wu\repository\TeamRepository.class
+com\wu\WuApplication.class
+com\wu\entity\TournamentUnit.class
+com\wu\repository\PlayerRepository.class
+com\wu\entity\TournamentUnit$TournamentUnitBuilder.class
+com\wu\entity\Player.class
+com\wu\repository\TournamentUnitRepository.class
