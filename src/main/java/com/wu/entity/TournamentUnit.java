@@ -19,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "teamList")
+@ToString(exclude = "teams")
 public class TournamentUnit {
 
     @Id
@@ -34,12 +34,7 @@ public class TournamentUnit {
     /**
      * 该单元下的参赛队伍列表。
      */
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "tournament_unit_team",
-        joinColumns        = @JoinColumn(name = "unit_id"),
-        inverseJoinColumns = @JoinColumn(name = "team_id")
-    )
+    @OneToMany(mappedBy = "tournamentUnit", fetch = FetchType.LAZY)
     @Builder.Default
-    private List<Team> teamList = new ArrayList<>();
+    private List<Team> teams = new ArrayList<>();
 }

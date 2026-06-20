@@ -21,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "players")
+@ToString(exclude = {"players", "tournamentUnit"})
 public class Team {
 
     @Id
@@ -44,4 +44,9 @@ public class Team {
     )
     @Builder.Default
     private List<Player> players = new ArrayList<>();
+
+    /** 所属赛事单元 */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")
+    private TournamentUnit tournamentUnit;
 }
