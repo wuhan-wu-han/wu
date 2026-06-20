@@ -19,6 +19,7 @@ import java.util.List;
 @Component
 @Order(4)
 @RequiredArgsConstructor
+@org.springframework.context.annotation.Profile("demo")
 public class MatchEventDemo implements CommandLineRunner {
 
     private final ApplicationEventPublisher eventPublisher;

@@ -1,5 +1,7 @@
 com\wu\service\RoundRobinService$TeamStanding.class
+com\wu\service\MatchService$ScheduleView.class
 com\wu\entity\Match.class
+com\wu\controller\MatchController.class
 com\wu\RoundRobinDemo.class
 com\wu\entity\TournamentUnit.class
 com\wu\entity\Player.class
@@ -10,6 +12,7 @@ com\wu\entity\Player$PlayerBuilder.class
 com\wu\repository\TeamRepository.class
 com\wu\service\MatchService.class
 com\wu\WuApplication.class
+com\wu\controller\MatchController$1.class
 com\wu\repository\PlayerRepository.class
 com\wu\entity\TournamentUnit$TournamentUnitBuilder.class
 com\wu\KnockoutDemo.class
@@ -21,6 +24,8 @@ com\wu\MatchEventDemo.class
 com\wu\service\RoundRobinService$MatchResult.class
 com\wu\service\RoundRobinService$RoundRobinResult.class
 com\wu\event\MatchGenerateEvent.class
+com\wu\service\MatchService$ScheduleRow.class
 com\wu\entity\Match$MatchBuilder.class
+com\wu\service\RoundRobinService$MatchPlan.class
 com\wu\repository\MatchRepository.class
 com\wu\service\KnockoutService$KnockoutResult.class

@@ -31,6 +31,14 @@ public class RoundRobinService {
 
     // ============ 数据传输对象 ============
 
+    /** 纯对阵计划（无比分） */
+    @Data
+    @AllArgsConstructor
+    public static class MatchPlan {
+        private Team team1;
+        private Team team2;
+    }
+
     @Data
     @AllArgsConstructor
     public static class MatchResult {
@@ -72,7 +80,25 @@ public class RoundRobinService {
         private List<TeamStanding> sortedStandings;
     }
 
-    // ============ 核心逻辑 ============
+    // ============ 纯对阵生成（无模拟） ============
+
+    /**
+     * 仅生成循环赛对阵列表，不模拟比分、不计算积分。
+     *
+     * @param teams 组内队伍列表
+     * @return 该组的所有对阵组合（有序）
+     */
+    public List<MatchPlan> planMatches(List<Team> teams) {
+        List<MatchPlan> plans = new ArrayList<>();
+        for (int i = 0; i < teams.size(); i++) {
+            for (int j = i + 1; j < teams.size(); j++) {
+                plans.add(new MatchPlan(teams.get(i), teams.get(j)));
+            }
+        }
+        return plans;
+    }
+
+    // ============ 核心逻辑（保留，供将来录入比分后使用） ============
 
     /**
      * 执行循环赛。

@@ -16,6 +16,7 @@ import java.util.List;
 @Component
 @Order(3)
 @RequiredArgsConstructor
+@org.springframework.context.annotation.Profile("demo")
 public class KnockoutDemo implements CommandLineRunner {
 
     private final KnockoutService knockoutService;

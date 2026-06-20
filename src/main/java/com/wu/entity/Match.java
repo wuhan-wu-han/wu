@@ -39,6 +39,10 @@ public class Match {
     @Column(name = "match_order")
     private Integer matchOrder;
 
+    /** 球桌号（自动分配 1~N） */
+    @Column(name = "table_number")
+    private Integer tableNumber;
+
     // ---- 对阵双方 ----
 
     @ManyToOne(fetch = FetchType.LAZY)

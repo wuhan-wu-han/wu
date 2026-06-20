@@ -16,8 +16,9 @@ import java.util.List;
  * 创建 4 支队伍跑循环赛，观察控制台输出的对阵表和排名。
  */
 @Component
-@Order(2)   // 在 TableInspector 之后运行
+@Order(2)
 @RequiredArgsConstructor
+@org.springframework.context.annotation.Profile("demo")
 public class RoundRobinDemo implements CommandLineRunner {
 
     private final RoundRobinService roundRobinService;

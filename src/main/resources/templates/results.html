@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="'赛程表 - ' + ${unitLabel}">赛程表</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; min-height: 100vh; }
+  .header { background: #1a1a2e; color: #fff; padding: 14px 28px; display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 17px; font-weight: 600; }
+  .header .badge { background: #e8b339; color: #1a1a2e; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+  .header a { color: #aab; text-decoration: none; font-size: 13px; margin-left: auto; }
+  .header a:hover { color: #fff; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 80px 20px; color: #999; }
+  .empty .icon { font-size: 56px; margin-bottom: 16px; }
+  .empty h2 { font-size: 18px; color: #666; margin-bottom: 8px; }
+  .empty p { font-size: 13px; }
+
+  /* Schedule card */
+  .schedule-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); overflow: hidden; }
+  .schedule-card .title-bar { background: #fafafa; padding: 14px 20px; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; gap: 10px; }
+  .schedule-card .title-bar h2 { font-size: 16px; color: #333; }
+  .schedule-card .title-bar .count { color: #888; font-size: 13px; margin-left: auto; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #f5f5f5; padding: 10px 8px; font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; }
+  tbody td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid #f0f0f0; text-align: center; }
+  tbody tr:hover { background: #fafcff; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .group-tag { display: inline-block; background: #e6f7ff; color: #1890ff; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .table-badge { display: inline-block; width: 32px; height: 32px; line-height: 32px; background: #fff7e6; color: #d48806; border: 1px solid #ffd591; border-radius: 50%; font-size: 13px; font-weight: 700; }
+  .versus { font-weight: 600; color: #333; letter-spacing: 0.5px; }
+  .vs { color: #ccc; margin: 0 8px; font-weight: 400; }
+
+  .warning { margin-top: 16px; padding: 12px 16px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; font-size: 13px; color: #ad6800; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span>🏓</span>
+  <h1 th:text="${unitLabel}">赛事结果</h1>
+  <span class="badge" th:text="'小组赛'">小组赛</span>
+  <a href="/">← 返回生成</a>
+</div>
+
+<div class="container">
+
+  <!-- ====== 空状态 ====== -->
+  <div th:if="${view.rows == null or view.rows.isEmpty()}" class="empty">
+    <div class="icon">📋</div>
+    <h2>暂无赛程数据</h2>
+    <p>请先输入选手名单并点击生成</p>
+  </div>
+
+  <!-- ====== 赛程表 ====== -->
+  <div th:if="${view.rows != null and !view.rows.isEmpty()}" class="schedule-card">
+    <div class="title-bar">
+      <h2>📋 小组赛赛程表</h2>
+      <span class="count" th:text="'共 ' + ${view.totalMatches} + ' 场比赛'">共 24 场</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:55px">球桌</th>
+          <th style="width:75px">组别</th>
+          <th style="width:45px">#</th>
+          <th style="text-align:left;padding-left:20px">对阵双方</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="row,iter : ${view.rows}">
+          <td><span class="table-badge" th:text="${row.tableNumber}">1</span></td>
+          <td><span class="group-tag" th:text="${row.groupName}">A组</span></td>
+          <td th:text="${iter.index + 1}" style="color:#aaa;font-size:12px"></td>
+          <td style="text-align:left;padding-left:20px">
+            <span class="versus">
+              <span th:text="${row.teamA}">赵云</span>
+              <span class="vs">vs</span>
+              <span th:text="${row.teamB}">张飞</span>
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 提示：淘汰赛待录入比分后生成 -->
+  <div th:if="${view.rows != null and !view.rows.isEmpty()}" class="warning">
+    ⚠ 以上为<strong>小组赛</strong>赛程。淘汰赛将在录入比分并确定出线队伍后生成。
+  </div>
+
+</div>
+
+</body>
+</html>

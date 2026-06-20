@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛事生成</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 32px 40px; width: 520px; max-width: 95vw; }
+  h1 { text-align: center; color: #1a1a2e; margin-bottom: 24px; font-size: 22px; }
+  .row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .field { flex: 1; }
+  label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 600; }
+  select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; transition: border-color .2s; }
+  select:focus, textarea:focus { outline: none; border-color: #4096ff; box-shadow: 0 0 0 2px rgba(64,150,255,0.12); }
+  textarea { resize: vertical; min-height: 160px; font-family: inherit; }
+  .btn { width: 100%; padding: 12px; background: #1677ff; color: #fff; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .btn:hover { background: #4096ff; }
+  .error { background: #fff2f0; border: 1px solid #ffccc7; color: #cf1322; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; }
+  .hint { color: #999; font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🏓 赛事系统</h1>
+
+  <div th:if="${error}" class="error" th:text="${error}"></div>
+
+  <form method="post" action="/generate">
+    <div class="row">
+      <div class="field">
+        <label>选择性别</label>
+        <select name="gender">
+          <option th:each="g : ${genders}"
+                  th:value="${g}"
+                  th:text="${g}"
+                  th:selected="${g == selectedGender}"></option>
+        </select>
+      </div>
+      <div class="field">
+        <label>选择项目</label>
+        <select name="event">
+          <option th:each="e : ${events}"
+                  th:value="${e}"
+                  th:text="${e}"
+                  th:selected="${e == selectedEvent}"></option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:20px">
+      <label>选手名单（每行一个姓名；双打时每两行为一队）</label>
+      <textarea name="names" th:text="${defaultNames}"></textarea>
+      <div class="hint">双打：前两行组一队，队名 "选手A/选手B"</div>
+    </div>
+
+    <button type="submit" class="btn">生成赛事</button>
+  </form>
+</div>
+</body>
+</html>

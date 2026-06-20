@@ -6,11 +6,7 @@ import com.wu.enums.UnitType;
 import com.wu.event.MatchGenerateEvent;
 import com.wu.repository.MatchRepository;
 import com.wu.repository.TeamRepository;
-import com.wu.service.KnockoutService.KnockoutMatch;
-import com.wu.service.KnockoutService.KnockoutResult;
-import com.wu.service.RoundRobinService.MatchResult;
-import com.wu.service.RoundRobinService.RoundRobinResult;
-import com.wu.service.RoundRobinService.TeamStanding;
+import com.wu.service.RoundRobinService.MatchPlan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -21,15 +17,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 赛事编排服务 —— 监听 {@link MatchGenerateEvent}，串联完整流程。
+ * 赛事编排服务。
  *
- * <h3>执行顺序</h3>
+ * <h3>阶段一：生成小组赛赛程</h3>
  * <ol>
- *   <li>分组 —— 随机抽签，将队伍分入若干小组</li>
- *   <li>循环赛 —— 组内 Round-Robin，生成积分表</li>
- *   <li>取前 N —— 每组前 N 名晋级淘汰赛</li>
- *   <li>淘汰赛 —— 蛇形交叉落位，Queue 模拟至冠军</li>
- *   <li>持久化 —— 所有对阵批量写入数据库</li>
+ *   <li>用户提交名单 → 触发 {@link MatchGenerateEvent}</li>
+ *   <li>抽签分组</li>
+ *   <li>仅生成小组循环赛对阵（比分字段留空，等待手动录入）</li>
+ *   <li>淘汰赛暂不生成 —— 等比分录入后才能确定出线者</li>
  * </ol>
  */
 @Slf4j
@@ -40,87 +35,71 @@ public class MatchService {
     private final TeamRepository teamRepository;
     private final MatchRepository matchRepository;
     private final RoundRobinService roundRobinService;
-    private final KnockoutService knockoutService;
 
     // ============ 事件监听入口 ============
 
-    /**
-     * 当用户提交参赛名单后触发，执行完整赛事流程。
-     */
     @EventListener
     @Transactional
     public void onMatchGenerate(MatchGenerateEvent event) {
         UnitType unitType = event.getUnitType();
         List<Team> rawTeams = event.getTeams();
         int groupSize = event.getGroupSize();
-        int advancePerGroup = event.getAdvancePerGroup();
 
         log.info("");
         log.info("╔══════════════════════════════════════════════════════════╗");
-        log.info("║  赛事生成开始 — {} ({} 队)                         ║", unitType, rawTeams.size());
+        log.info("║  生成小组赛赛程 — {} ({} 队)                        ║", unitType, rawTeams.size());
         log.info("╚══════════════════════════════════════════════════════════╝");
         log.info("");
 
-        // 0. 确保队伍已持久化（有 ID 才能被 Match 引用）
+        // 0. 持久化队伍
         List<Team> teams = persistTeams(rawTeams);
 
         // 1. 分组
         List<List<Team>> groups = drawGroups(teams, groupSize);
         printGroups(groups);
 
-        // 2. 小组循环赛
-        List<Team> qualified = new ArrayList<>();
+        // 2. 生成小组赛对阵（不模拟比分）
         List<Match> allMatches = new ArrayList<>();
+        int tableCounter = 1;
 
         for (int g = 0; g < groups.size(); g++) {
             char groupName = (char) ('A' + g);
             List<Team> group = groups.get(g);
+            String roundLabel = groupName + "组";
 
-            log.info("───── {}组 循环赛 ─────", groupName);
-            RoundRobinResult rr = roundRobinService.run(group);
+            List<MatchPlan> plans = roundRobinService.planMatches(group);
 
-            // 转换为 Match 实体
-            for (int i = 0; i < rr.getMatches().size(); i++) {
-                MatchResult mr = rr.getMatches().get(i);
-                Match m = toMatchEntity(mr, unitType, groupName + "组", i);
+            log.info("───── {}组：{} 场比赛 ─────", groupName, plans.size());
+            for (int i = 0; i < plans.size(); i++) {
+                MatchPlan plan = plans.get(i);
+                Match m = Match.builder()
+                        .unitType(unitType)
+                        .round(roundLabel)
+                        .matchOrder(i)
+                        .tableNumber(tableCounter++)
+                        .team1(plan.getTeam1())
+                        .team2(plan.getTeam2())
+                        .score1(null)       // 留空，等待录入
+                        .score2(null)
+                        .winner(null)
+                        .build();
                 allMatches.add(m);
-            }
-
-            // 取前 N 晋级
-            List<TeamStanding> standings = rr.getSortedStandings();
-            for (int i = 0; i < Math.min(advancePerGroup, standings.size()); i++) {
-                TeamStanding ts = standings.get(i);
-                qualified.add(ts.getTeam());
-                log.info("  晋级：{} (积分:{}, 净胜局:{})",
-                        ts.getTeam().getName(), ts.getPoints(), ts.getNetGames());
+                log.info("  球桌{}  {} vs {}",
+                        m.getTableNumber(),
+                        plan.getTeam1().getName(),
+                        plan.getTeam2().getName());
             }
         }
 
-        // 3. 淘汰赛
-        log.info("");
-        log.info("───── 淘汰赛 ({} 队晋级) ─────", qualified.size());
-        KnockoutResult ko = knockoutService.run(qualified);
-
-        // 转换为 Match 实体
-        for (int i = 0; i < ko.getAllMatches().size(); i++) {
-            KnockoutMatch km = ko.getAllMatches().get(i);
-            Match m = toMatchEntity(km, unitType, km.getRoundName(), i);
-            allMatches.add(m);
-        }
-
-        // 4. 批量持久化
+        // 3. 批量持久化
         matchRepository.saveAll(allMatches);
         log.info("");
-        log.info("✅ 全部 {} 场对阵已存入数据库 (小组赛 + 淘汰赛)", allMatches.size());
-        log.info("🏆 冠军：{}", ko.getChampion().getName());
+        log.info("✅ 小组赛 {} 场对阵已生成（比分留空，等待录入）", allMatches.size());
+        log.info("⚠ 淘汰赛暂未生成 —— 请先录入比分后再确定出线队伍");
     }
 
     // ============ 分组 ============
 
-    /**
-     * 随机抽签，将队伍尽量均匀分入小组。
-     * 每组约 {@code groupSize} 队，共 ceil(n/groupSize) 组。
-     */
     List<List<Team>> drawGroups(List<Team> teams, int groupSize) {
         List<Team> shuffled = new ArrayList<>(teams);
         Collections.shuffle(shuffled, new Random());
@@ -129,19 +108,13 @@ public class MatchService {
         int groupCount = (int) Math.ceil((double) total / groupSize);
 
         List<List<Team>> groups = new ArrayList<>();
-        for (int g = 0; g < groupCount; g++) {
-            groups.add(new ArrayList<>());
-        }
+        for (int g = 0; g < groupCount; g++) groups.add(new ArrayList<>());
 
-        // 蛇形分配，减少组间实力偏差
         for (int i = 0; i < total; i++) {
             int g = i % groupCount;
-            if ((i / groupCount) % 2 == 1) {
-                g = groupCount - 1 - g; // 偶数轮反向
-            }
+            if ((i / groupCount) % 2 == 1) g = groupCount - 1 - g;
             groups.get(g).add(shuffled.get(i));
         }
-
         return groups;
     }
 
@@ -155,40 +128,74 @@ public class MatchService {
         }
     }
 
-    // ============ 实体转换 ============
+    // ============ 视图模型 & 查询 ============
 
-    private Match toMatchEntity(MatchResult mr, UnitType unitType, String round, int order) {
-        return Match.builder()
-                .unitType(unitType)
-                .round(round)
-                .matchOrder(order)
-                .team1(mr.getTeam1())
-                .team2(mr.getTeam2())
-                .score1(mr.getTeam1Score())
-                .score2(mr.getTeam2Score())
-                .winner(mr.getWinner())
-                .build();
+    /**
+     * 从 DB 查询指定赛事单元的赛程表，供页面展示。
+     */
+    @Transactional(readOnly = true)
+    public ScheduleView buildView(UnitType unitType) {
+        List<Match> matches = matchRepository
+                .findByUnitTypeOrderByRoundAscMatchOrderAsc(unitType);
+
+        if (matches.isEmpty()) {
+            return ScheduleView.empty();
+        }
+
+        // 只取小组赛（round 以 "组" 结尾）
+        List<Match> groupMatches = matches.stream()
+                .filter(m -> m.getRound().endsWith("组"))
+                .collect(Collectors.toList());
+
+        // 按组别分组
+        Map<String, List<ScheduleRow>> byGroup = new LinkedHashMap<>();
+        for (Match m : groupMatches) {
+            String groupName = m.getRound();
+            byGroup.computeIfAbsent(groupName, k -> new ArrayList<>())
+                   .add(new ScheduleRow(
+                       groupName,
+                       m.getTableNumber(),
+                       m.getTeam1().getName(),
+                       m.getTeam2().getName()
+                   ));
+        }
+
+        // 保持组别顺序
+        List<String> ordered = new ArrayList<>(byGroup.keySet());
+        ordered.sort(Comparator.naturalOrder());
+
+        List<ScheduleRow> allRows = new ArrayList<>();
+        for (String g : ordered) {
+            allRows.addAll(byGroup.get(g));
+        }
+
+        return new ScheduleView(allRows, allRows.size());
     }
 
-    private Match toMatchEntity(KnockoutMatch km, UnitType unitType, String round, int order) {
-        return Match.builder()
-                .unitType(unitType)
-                .round(round)
-                .matchOrder(order)
-                .team1(km.getTeam1())
-                .team2(km.getTeam2())
-                .score1(km.getScore1())
-                .score2(km.getScore2())
-                .winner(km.getWinner())
-                .build();
+    // ============ 视图 DTO ============
+
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class ScheduleView {
+        private List<ScheduleRow> rows;
+        private int totalMatches;
+
+        static ScheduleView empty() {
+            return new ScheduleView(List.of(), 0);
+        }
+    }
+
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class ScheduleRow {
+        private String groupName;     // "A组"
+        private Integer tableNumber;  // 球桌号
+        private String teamA;         // 队伍A 名称
+        private String teamB;         // 队伍B 名称
     }
 
     // ============ 持久化辅助 ============
 
-    /**
-     * 批量保存队伍，确保返回的实体有 ID。
-     * 如果已经持久化（有 ID 且 DB 中存在），则跳过。
-     */
     private List<Team> persistTeams(List<Team> teams) {
         List<Team> result = new ArrayList<>();
         for (Team t : teams) {
