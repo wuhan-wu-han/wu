@@ -35,13 +35,21 @@ public class KnockoutService {
         private String roundName;
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class KnockoutResult {
+        private Team champion;
+        /** 所有轮次的所有比赛（平铺） */
+        private List<KnockoutMatch> allMatches;
+    }
+
     // ============ 入口 ============
 
     /**
      * @param qualified 每组前 2 名依次排列：[A1, A2, B1, B2, C1, C2, ...]
-     * @return 冠军
+     * @return 淘汰赛结果（冠军 + 全部对阵）
      */
-    public Team run(List<Team> qualified) {
+    public KnockoutResult run(List<Team> qualified) {
         int n = qualified.size();
         if (n < 2 || (n & (n - 1)) != 0) {
             throw new IllegalArgumentException("晋级队伍数必须是 2 的幂次，当前 " + n);
@@ -88,7 +96,13 @@ public class KnockoutService {
         // 3. 晋级路线图
         printBracket(allRounds, champion);
 
-        return champion;
+        // 平铺所有轮次比赛
+        List<KnockoutMatch> flat = new ArrayList<>();
+        for (List<KnockoutMatch> roundMatches : allRounds) {
+            flat.addAll(roundMatches);
+        }
+
+        return new KnockoutResult(champion, flat);
     }
 
     // ============ 蛇形落位 ============

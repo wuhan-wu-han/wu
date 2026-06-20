@@ -33,7 +33,7 @@ public class KnockoutDemo implements CommandLineRunner {
         qualified.add(mock("D1-典韦"));
         qualified.add(mock("D2-甘宁"));
 
-        knockoutService.run(qualified);
+        knockoutService.run(qualified); // 返回 KnockoutResult，Demo 只验证控制台输出
     }
 
     private Team mock(String name) {

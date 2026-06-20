@@ -1,4 +1,25 @@
+# ============================================================
+# 默认使用 H2 内存库（开发/演示）。生产切换到 MySQL：
+#   mvn spring-boot:run -Dspring-boot.run.profiles=mysql
+# ============================================================
 spring:
+  profiles:
+    active: h2
+
+  jpa:
+    hibernate:
+      ddl-auto: update      # 生产用 update，演示可改 create
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+# H2 内存库（默认）
+spring:
+  config:
+    activate:
+      on-profile: h2
   datasource:
     url: jdbc:h2:mem:wu_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -6,12 +27,27 @@ spring:
     password:
   h2:
     console:
-      enabled: true       # 可在浏览器访问 http://localhost:8080/h2-console
+      enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: true
   jpa:
     hibernate:
-      ddl-auto: create    # 每次启动自动建表，方便检查表结构
-    show-sql: true        # 控制台打印 DDL，确认生成正确
-    properties:
-      hibernate:
-        format_sql: true
+      ddl-auto: create
+    show-sql: true
+
+---
+# MySQL 生产库
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/wu_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
