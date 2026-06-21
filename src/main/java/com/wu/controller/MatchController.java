@@ -36,13 +36,17 @@ public class MatchController {
     // ============ 表单页 ============
 
     @GetMapping("/")
-    public String form(Model model) {
+    public String form(Model model,
+                       @RequestParam(required = false) String error,
+                       @RequestParam(required = false) String selectedGender,
+                       @RequestParam(required = false) String selectedEvent,
+                       @RequestParam(required = false) String lastNames) {
         model.addAttribute("genders", Arrays.asList("男", "女"));
         model.addAttribute("events", Arrays.asList("单打", "双打"));
-        // 默认值（回显由 flash attribute 覆盖）
-        if (!model.containsAttribute("selectedGender")) model.addAttribute("selectedGender", "男");
-        if (!model.containsAttribute("selectedEvent"))  model.addAttribute("selectedEvent", "单打");
-        if (!model.containsAttribute("lastNames"))      model.addAttribute("lastNames", "");
+        model.addAttribute("selectedGender", selectedGender != null ? selectedGender : "男");
+        model.addAttribute("selectedEvent",  selectedEvent  != null ? selectedEvent  : "单打");
+        model.addAttribute("lastNames",      lastNames      != null ? lastNames      : "");
+        model.addAttribute("error", error);
         return "index";
     }
 
@@ -98,14 +102,13 @@ public class MatchController {
         }
 
         if (teams.size() < 2) {
-            flashError(redirectAttrs, gender, event, names, "请至少输入2支队伍");
-            return "redirect:/";
+            return redirectWithError(redirectAttrs, gender, event, names,
+                    "请至少输入2支队伍（双打每行两人空格分隔）");
         }
 
         if (teams.size() < 4) {
-            flashError(redirectAttrs, gender, event, names,
+            return redirectWithError(redirectAttrs, gender, event, names,
                     "请至少输入4名选手（双打至少4队8人）才能分组");
-            return "redirect:/";
         }
 
         log.info("收到表单提交：gender={}, event={}, unitType={}, teams={}",
@@ -144,12 +147,13 @@ public class MatchController {
         return "results";
     }
 
-    /** 验证失败时保留用户输入，避免下拉框和文本域重置 */
-    private void flashError(RedirectAttributes attrs, String gender, String event,
-                            String names, String message) {
-        attrs.addFlashAttribute("error", message);
-        attrs.addFlashAttribute("selectedGender", gender);
-        attrs.addFlashAttribute("selectedEvent", event);
-        attrs.addFlashAttribute("lastNames", names);
+    /** 验证失败时通过 URL 参数回传，彻底避免 flash/session 不可靠的问题 */
+    private String redirectWithError(RedirectAttributes attrs, String gender,
+                                     String event, String names, String message) {
+        attrs.addAttribute("error", message);
+        attrs.addAttribute("selectedGender", gender);
+        attrs.addAttribute("selectedEvent", event);
+        attrs.addAttribute("lastNames", names);
+        return "redirect:/";
     }
 }
