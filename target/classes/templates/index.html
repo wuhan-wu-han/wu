@@ -50,11 +50,11 @@
     </div>
 
     <div class="field" style="margin-bottom:20px">
-      <label>选手名单（每行一个姓名；双打时每两行为一队）</label>
+      <label>选手名单</label>
       <textarea name="names" rows="8"
-                placeholder="每行一个姓名，例如：&#10;张三&#10;李四&#10;王五&#10;赵六&#10;...（至少4人）"
+                placeholder="单打：每行一人&#10;张三&#10;李四&#10;王五&#10;赵六&#10;&#10;双打：每行两人（空格分隔）&#10;张三 李四&#10;王五 赵六"
                 th:text="${lastNames}"></textarea>
-      <div class="hint">双打：每两行组成一队，队名自动生成 "选手A/选手B"</div>
+      <div class="hint">单打每行一个姓名；双打每行两个姓名（空格分隔），队名 "张三/李四"</div>
     </div>
 
     <button type="submit" class="btn">生成赛事</button>

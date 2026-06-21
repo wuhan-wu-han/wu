@@ -76,19 +76,17 @@ public class MatchController {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
 
-        if (nameList.size() < 2) {
-            flashError(redirectAttrs, gender, event, names, "请至少输入2名选手");
-            return "redirect:/";
-        }
-
-        // 双打按每 2 个名字一组组队
+        // 双打：每行一组，空格分隔两人；单打：每行一人
         List<Team> teams = new ArrayList<>();
         if ("双打".equals(event)) {
-            for (int i = 0; i + 1 < nameList.size(); i += 2) {
-                Team t = new Team();
-                t.setName(nameList.get(i) + "/" + nameList.get(i + 1));
-                t.setPlayers(new ArrayList<>());
-                teams.add(t);
+            for (String line : nameList) {
+                String[] parts = line.split("\\s+");
+                if (parts.length >= 2) {
+                    Team t = new Team();
+                    t.setName(parts[0] + "/" + parts[1]);
+                    t.setPlayers(new ArrayList<>());
+                    teams.add(t);
+                }
             }
         } else {
             for (String name : nameList) {
@@ -97,6 +95,11 @@ public class MatchController {
                 t.setPlayers(new ArrayList<>());
                 teams.add(t);
             }
+        }
+
+        if (teams.size() < 2) {
+            flashError(redirectAttrs, gender, event, names, "请至少输入2支队伍");
+            return "redirect:/";
         }
 
         if (teams.size() < 4) {
