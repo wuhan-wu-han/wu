@@ -33,16 +33,10 @@ public class MatchController {
     private final ApplicationEventPublisher eventPublisher;
     private final MatchService matchService;
 
-    // 16 个预设名字，方便演示
-    private static final String DEFAULT_NAMES =
-            "赵云\n关羽\n张飞\n马超\n黄忠\n许褚\n典韦\n甘宁\n" +
-            "吕布\n张辽\n太史慈\n夏侯惇\n周瑜\n陆逊\n孙策\n孙权";
-
     // ============ 表单页 ============
 
     @GetMapping("/")
     public String form(Model model) {
-        model.addAttribute("defaultNames", DEFAULT_NAMES);
         model.addAttribute("genders", Arrays.asList("男", "女"));
         model.addAttribute("events", Arrays.asList("单打", "双打"));
         model.addAttribute("selectedGender", "男");
@@ -71,6 +65,9 @@ public class MatchController {
             unitType = UnitType.MEN_SINGLE;
         }
 
+        // ★ 控制台日志：方便验证是否取到了新数据
+        System.out.println("当前输入：" + names);
+
         // 解析选手名 → 创建 Team（单打每队1人，双打每队2人）
         List<String> nameList = Arrays.stream(names.split("\n"))
                 .map(String::trim)
@@ -78,7 +75,7 @@ public class MatchController {
                 .collect(Collectors.toList());
 
         if (nameList.size() < 2) {
-            redirectAttrs.addFlashAttribute("error", "至少需要 2 名选手");
+            redirectAttrs.addFlashAttribute("error", "请至少输入2名选手");
             return "redirect:/";
         }
 
@@ -101,7 +98,7 @@ public class MatchController {
         }
 
         if (teams.size() < 4) {
-            redirectAttrs.addFlashAttribute("error", "至少需要 4 支队伍才能分组");
+            redirectAttrs.addFlashAttribute("error", "请至少输入4名选手（双打至少4队8人）才能分组");
             return "redirect:/";
         }
 
@@ -129,6 +126,7 @@ public class MatchController {
         ScheduleView view = matchService.buildView(ut);
         model.addAttribute("view", view);
 
+        // 翻译 unitType 为中文
         String label = switch (ut) {
             case MEN_SINGLE   -> "男子单打";
             case WOMEN_SINGLE -> "女子单打";
