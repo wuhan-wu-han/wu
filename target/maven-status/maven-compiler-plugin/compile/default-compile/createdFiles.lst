@@ -7,7 +7,7 @@ com\wu\entity\TournamentUnit.class
 com\wu\entity\Player.class
 com\wu\enums\Stage.class
 com\wu\service\KnockoutService.class
-com\wu\service\MatchService$RoundBlock.class
+com\wu\service\ScheduleEngine.class
 com\wu\service\RoundRobinService.class
 com\wu\enums\UnitType.class
 com\wu\entity\Player$PlayerBuilder.class
@@ -24,11 +24,13 @@ com\wu\entity\Team.class
 com\wu\service\MatchService$GroupBlock.class
 com\wu\service\KnockoutService$KnockoutMatch.class
 com\wu\MatchEventDemo.class
+com\wu\service\MatchService$GenerateResult.class
 com\wu\service\RoundRobinService$MatchResult.class
+com\wu\service\MatchService$RoundRow.class
 com\wu\service\RoundRobinService$RoundRobinResult.class
 com\wu\event\MatchGenerateEvent.class
-com\wu\service\MatchService$ScheduleRow.class
 com\wu\entity\Match$MatchBuilder.class
+com\wu\service\ScheduleEngine$RoundPlan.class
 com\wu\service\RoundRobinService$MatchPlan.class
 com\wu\repository\MatchRepository.class
 com\wu\service\KnockoutService$KnockoutResult.class

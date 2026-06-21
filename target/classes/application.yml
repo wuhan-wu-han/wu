@@ -14,6 +14,11 @@ spring:
       hibernate:
         format_sql: true
 
+# 排程引擎配置
+schedule:
+  max-tables: 8
+  min-rest-rounds: 1
+
 ---
 # H2 内存库（默认）
 spring:

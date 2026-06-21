@@ -47,6 +47,10 @@ public class Match {
     @Column(name = "table_number")
     private Integer tableNumber;
 
+    /** 所属轮次号（从 1 开始） */
+    @Column(name = "round_number")
+    private Integer roundNumber;
+
     // ---- 对阵双方 ----
 
     @ManyToOne(fetch = FetchType.LAZY)
