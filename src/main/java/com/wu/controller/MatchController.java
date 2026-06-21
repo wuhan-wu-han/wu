@@ -39,8 +39,10 @@ public class MatchController {
     public String form(Model model) {
         model.addAttribute("genders", Arrays.asList("男", "女"));
         model.addAttribute("events", Arrays.asList("单打", "双打"));
-        model.addAttribute("selectedGender", "男");
-        model.addAttribute("selectedEvent", "单打");
+        // 默认值（回显由 flash attribute 覆盖）
+        if (!model.containsAttribute("selectedGender")) model.addAttribute("selectedGender", "男");
+        if (!model.containsAttribute("selectedEvent"))  model.addAttribute("selectedEvent", "单打");
+        if (!model.containsAttribute("lastNames"))      model.addAttribute("lastNames", "");
         return "index";
     }
 
@@ -75,7 +77,7 @@ public class MatchController {
                 .collect(Collectors.toList());
 
         if (nameList.size() < 2) {
-            redirectAttrs.addFlashAttribute("error", "请至少输入2名选手");
+            flashError(redirectAttrs, gender, event, names, "请至少输入2名选手");
             return "redirect:/";
         }
 
@@ -98,7 +100,8 @@ public class MatchController {
         }
 
         if (teams.size() < 4) {
-            redirectAttrs.addFlashAttribute("error", "请至少输入4名选手（双打至少4队8人）才能分组");
+            flashError(redirectAttrs, gender, event, names,
+                    "请至少输入4名选手（双打至少4队8人）才能分组");
             return "redirect:/";
         }
 
@@ -136,5 +139,14 @@ public class MatchController {
         model.addAttribute("unitLabel", label);
 
         return "results";
+    }
+
+    /** 验证失败时保留用户输入，避免下拉框和文本域重置 */
+    private void flashError(RedirectAttributes attrs, String gender, String event,
+                            String names, String message) {
+        attrs.addFlashAttribute("error", message);
+        attrs.addFlashAttribute("selectedGender", gender);
+        attrs.addFlashAttribute("selectedEvent", event);
+        attrs.addFlashAttribute("lastNames", names);
     }
 }
