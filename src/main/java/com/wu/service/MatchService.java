@@ -91,8 +91,9 @@ public class MatchService {
             }
         }
 
-        // ★ 调度编排
-        List<RoundPlan> rounds = scheduleEngine.schedule(allMatches);
+        // ★ 调度编排（使用用户指定的球桌数）
+        int tableCount = event.getTableCount();
+        List<RoundPlan> rounds = scheduleEngine.schedule(allMatches, tableCount);
 
         // 展平保存
         List<Match> flat = new ArrayList<>();
@@ -100,7 +101,7 @@ public class MatchService {
         matchRepository.saveAll(flat);
 
         // 缓存最后结果供视图查询
-        lastResult = new GenerateResult(formatLabel, n, rounds);
+        lastResult = new GenerateResult(formatLabel, n, rounds, tableCount);
 
         log.info("✅ {} · {} 队 · {} 轮 · {} 场",
                 formatLabel, n, rounds.size(), flat.size());
@@ -159,7 +160,8 @@ public class MatchService {
                 if (m.getStage() != Stage.GROUP) continue;
                 String gn = (m.getGroupName() != null ? m.getGroupName() : "?") + "组";
                 groupMap.computeIfAbsent(gn, k -> new ArrayList<>())
-                        .add(new RoundRow(rp.roundNumber(), m.getTableNumber(),
+                        .add(new RoundRow(m.getId(), rp.roundNumber(),
+                                m.getTableNumber() != null ? m.getTableNumber() : 0,
                                 m.getTeam1().getName(), m.getTeam2().getName()));
             }
         }
@@ -171,6 +173,7 @@ public class MatchService {
                 lastResult.formatLabel(),
                 lastResult.teamCount(),
                 rounds.size(),
+                lastResult.tableCount(),
                 blocks,
                 rounds.stream().mapToInt(r -> r.matches().size()).sum());
     }
@@ -178,7 +181,7 @@ public class MatchService {
     // ============ DTO ============
 
     private record GenerateResult(String formatLabel, int teamCount,
-                                  List<RoundPlan> rounds) {}
+                                  List<RoundPlan> rounds, int tableCount) {}
 
     @lombok.Data
     @lombok.AllArgsConstructor
@@ -186,10 +189,11 @@ public class MatchService {
         private String formatLabel;
         private int teamCount;
         private int totalRounds;
+        private int tableCount;
         private List<GroupBlock> groups;
         private int totalMatches;
         static ScheduleView empty() {
-            return new ScheduleView("", 0, 0, List.of(), 0);
+            return new ScheduleView("", 0, 0, 0, List.of(), 0);
         }
     }
 
@@ -203,6 +207,7 @@ public class MatchService {
     @lombok.Data
     @lombok.AllArgsConstructor
     public static class RoundRow {
+        private long matchId;
         private int roundNumber;
         private int tableNumber;
         private String teamA;

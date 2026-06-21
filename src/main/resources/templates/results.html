@@ -58,6 +58,12 @@
   .empty h2 { font-size:18px; color:#666; margin-bottom:6px; }
   .empty p { font-size:13px; }
   .notice { margin-top:20px; padding:14px 18px; background:#fffbe6; border:1px solid #ffe58f; border-radius:8px; font-size:13px; color:#ad6800; }
+  .action-btn { padding:10px 20px; border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; transition:.2s; }
+  .save-btn { background:#1677ff; color:#fff; }
+  .save-btn:hover { background:#4096ff; }
+  .edit-btn { background:#fff; color:#1677ff; border:1px solid #1677ff; }
+  .edit-btn:hover { background:#f0f5ff; }
+  .tbl-input:disabled { background:#f5f5f5; border-color:#e0e0e0; color:#888; }
 </style>
 </head>
 <body>
@@ -106,12 +112,19 @@
         </div>
         <table class="round-table">
           <thead>
-            <tr><th style="width:45px">轮次</th><th style="width:50px">球桌</th><th>对阵双方</th></tr>
+            <tr><th style="width:45px">轮次</th><th style="width:60px">球桌</th><th>对阵双方</th></tr>
           </thead>
           <tbody>
-            <tr th:each="r : ${gb.rows}">
+            <tr th:each="r : ${gb.rows}" th:attr="data-mid=${r.matchId}">
               <td><span class="round-num" th:text="${r.roundNumber}">1</span></td>
-              <td><span class="tbl-badge" th:text="${r.tableNumber}">1</span></td>
+              <td>
+                <input type="number" class="tbl-input"
+                       th:value="${r.tableNumber}"
+                       th:attr="data-mid=${r.matchId},max=${view.tableCount}"
+                       min="1"
+                       style="width:52px;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:13px"
+                       onchange="this.value=Math.min(this.max||99,Math.max(1,this.value||1))">
+              </td>
               <td>
                 <span class="team" th:text="${r.teamA}">A1</span>
                 <span class="vs">vs</span>
@@ -120,6 +133,13 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- 按钮区 -->
+      <div style="display:flex;gap:12px;margin-top:20px">
+        <button id="btn-save"   class="action-btn save-btn" onclick="saveTableNumbers()">💾 保存桌号安排</button>
+        <button id="btn-edit"   class="action-btn edit-btn" style="display:none" onclick="enableEditing()">✏️ 重新编辑桌号</button>
+        <span id="save-status" style="align-self:center;font-size:13px;color:#52c41a;display:none"></span>
       </div>
     </div>
 
@@ -160,6 +180,34 @@
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     evt.target.classList.add('active');
+  }
+
+  function saveTableNumbers() {
+    const inputs = document.querySelectorAll('.tbl-input');
+    const updates = [];
+    inputs.forEach(inp => {
+      updates.push({ matchId: parseInt(inp.dataset.mid), tableNumber: parseInt(inp.value) || 1 });
+    });
+    fetch('/api/update-table-numbers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    }).then(r => r.json()).then(data => {
+      document.getElementById('save-status').textContent = '✅ 桌号已保存 (' + data.updated + ' 场)';
+      document.getElementById('save-status').style.display = '';
+      document.getElementById('btn-save').style.display = 'none';
+      document.getElementById('btn-edit').style.display = '';
+      inputs.forEach(inp => inp.disabled = true);
+    }).catch(e => {
+      alert('保存失败：' + e.message);
+    });
+  }
+
+  function enableEditing() {
+    document.querySelectorAll('.tbl-input').forEach(inp => inp.disabled = false);
+    document.getElementById('save-status').style.display = 'none';
+    document.getElementById('btn-save').style.display = '';
+    document.getElementById('btn-edit').style.display = 'none';
   }
 </script>
 </body>

@@ -57,6 +57,15 @@
       <div class="hint">单打每行一个姓名；双打每行两个姓名（空格分隔），队名 "张三/李四"</div>
     </div>
 
+    <div class="field" style="margin-bottom:16px">
+      <label for="tableCountInput">🏓 可用球桌数量</label>
+      <input type="number" id="tableCountInput" name="tableCount"
+             value="8" min="1" max="20"
+             style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px"
+             oninput="this.value=Math.min(20,Math.max(1,this.value||8))">
+      <div class="hint">1~20，默认 8；同一轮内桌号不重复</div>
+    </div>
+
     <button type="submit" class="btn">生成赛事</button>
   </form>
 </div>

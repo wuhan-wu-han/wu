@@ -28,16 +28,20 @@ public class MatchGenerateEvent extends ApplicationEvent {
     /** 每组晋级人数（默认 2） */
     private final int advancePerGroup;
 
+    /** 可用球桌数 */
+    private final int tableCount;
+
     public MatchGenerateEvent(Object source, UnitType unitType, List<Team> teams) {
-        this(source, unitType, teams, 4, 2);
+        this(source, unitType, teams, 4, 2, 8);
     }
 
     public MatchGenerateEvent(Object source, UnitType unitType, List<Team> teams,
-                              int groupSize, int advancePerGroup) {
+                              int groupSize, int advancePerGroup, int tableCount) {
         super(source);
         this.unitType = unitType;
         this.teams = teams;
         this.groupSize = groupSize;
         this.advancePerGroup = advancePerGroup;
+        this.tableCount = tableCount;
     }
 }

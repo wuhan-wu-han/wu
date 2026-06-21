@@ -25,9 +25,19 @@ import java.util.stream.Collectors;
 public class ScheduleEngine {
 
     @Value("${schedule.max-tables:8}")
-    private int maxTables;
+    private int defaultMaxTables;
 
+    /** 使用用户指定的球桌数编排 */
+    public List<RoundPlan> schedule(List<Match> rawMatches, int tableCount) {
+        return doSchedule(rawMatches, tableCount);
+    }
+
+    /** 使用默认球桌数编排 */
     public List<RoundPlan> schedule(List<Match> rawMatches) {
+        return doSchedule(rawMatches, defaultMaxTables);
+    }
+
+    private List<RoundPlan> doSchedule(List<Match> rawMatches, int maxTables) {
         // 按组别分组
         Map<String, LinkedList<Match>> byGroup = new LinkedHashMap<>();
         for (Match m : rawMatches) {

@@ -3,19 +3,20 @@ package com.wu.controller;
 import com.wu.entity.Team;
 import com.wu.enums.UnitType;
 import com.wu.event.MatchGenerateEvent;
+import com.wu.entity.Match;
+import com.wu.repository.MatchRepository;
 import com.wu.service.MatchService;
 import com.wu.service.MatchService.ScheduleView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +33,7 @@ public class MatchController {
 
     private final ApplicationEventPublisher eventPublisher;
     private final MatchService matchService;
+    private final MatchRepository matchRepository;
 
     // ============ 表单页 ============
 
@@ -56,6 +58,7 @@ public class MatchController {
     public String generate(@RequestParam String gender,
                            @RequestParam String event,
                            @RequestParam String names,
+                           @RequestParam(defaultValue = "8") int tableCount,
                            RedirectAttributes redirectAttrs) {
         // 确定 UnitType
         UnitType unitType;
@@ -115,7 +118,8 @@ public class MatchController {
                 gender, event, unitType, teams.size());
 
         // 发布事件 → MatchService.onMatchGenerate() 同步执行全流程
-        eventPublisher.publishEvent(new MatchGenerateEvent(this, unitType, teams));
+        eventPublisher.publishEvent(
+                new MatchGenerateEvent(this, unitType, teams, 4, 2, tableCount));
 
         redirectAttrs.addAttribute("unitType", unitType.name());
         return "redirect:/results";
@@ -147,7 +151,26 @@ public class MatchController {
         return "results";
     }
 
-    /** 验证失败时通过 URL 参数回传，彻底避免 flash/session 不可靠的问题 */
+    // ============ 保存桌号 API ============
+
+    @PostMapping("/api/update-table-numbers")
+    @ResponseBody
+    public ResponseEntity<?> updateTableNumbers(@RequestBody List<TableUpdate> updates) {
+        List<Match> toSave = new ArrayList<>();
+        for (TableUpdate u : updates) {
+            Match m = matchRepository.findById(u.matchId).orElse(null);
+            if (m != null && u.tableNumber >= 1) {
+                m.setTableNumber(u.tableNumber);
+                toSave.add(m);
+            }
+        }
+        matchRepository.saveAll(toSave);
+        return ResponseEntity.ok(Map.of("status", "ok", "updated", toSave.size()));
+    }
+
+    public record TableUpdate(long matchId, int tableNumber) {}
+
+    /** 验证失败时通过 URL 参数回传 */
     private String redirectWithError(RedirectAttributes attrs, String gender,
                                      String event, String names, String message) {
         attrs.addAttribute("error", message);
