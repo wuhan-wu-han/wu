@@ -1,17 +1,12 @@
 package com.wu.entity;
 
+import com.wu.enums.Stage;
 import com.wu.enums.UnitType;
 import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * 比赛对阵记录 —— 涵盖小组赛和淘汰赛所有场次。
- * <p>
- * {@code round} 字段区分比赛阶段：
- * <ul>
- *   <li>小组赛：{@code "A组"} / {@code "B组"} ...</li>
- *   <li>淘汰赛：{@code "1/4决赛"} / {@code "半决赛"} / {@code "决赛"}</li>
- * </ul>
+ * 比赛对阵记录。
  */
 @Entity
 @Table(name = "match_result")
@@ -26,20 +21,29 @@ public class Match {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 所属赛事单元（男单/女单/男双/女双） */
+    /** 所属赛事单元 */
     @Enumerated(EnumType.STRING)
     @Column(name = "unit_type", nullable = false, length = 20)
     private UnitType unitType;
 
-    /** 阶段：小组名（"A组"）或淘汰赛轮次名（"1/4决赛"） */
-    @Column(nullable = false, length = 32)
-    private String round;
+    /** 阶段：GROUP 或 KNOCKOUT */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 12)
+    private Stage stage;
 
-    /** 同轮次内的序号（0-based） */
+    /** 组别标识（仅小组赛）："A" / "B" / ... */
+    @Column(length = 4)
+    private String groupName;
+
+    /** 轮次显示名："第1轮" / "1/4决赛" / "半决赛" / "决赛" */
+    @Column(name = "round_name", nullable = false, length = 32)
+    private String roundName;
+
+    /** 同轮次内的序号 */
     @Column(name = "match_order")
     private Integer matchOrder;
 
-    /** 球桌号（自动分配 1~N） */
+    /** 球桌号 */
     @Column(name = "table_number")
     private Integer tableNumber;
 

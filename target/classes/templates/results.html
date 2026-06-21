@@ -3,100 +3,178 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title th:text="'赛程表 - ' + ${unitLabel}">赛程表</title>
+<title th:text="'赛程 - ' + ${unitLabel}">赛程</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; min-height: 100vh; }
-  .header { background: #1a1a2e; color: #fff; padding: 14px 28px; display: flex; align-items: center; gap: 12px; }
-  .header h1 { font-size: 17px; font-weight: 600; }
-  .header .badge { background: #e8b339; color: #1a1a2e; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
-  .header a { color: #aab; text-decoration: none; font-size: 13px; margin-left: auto; }
-  .header a:hover { color: #fff; }
-  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei",sans-serif; background:#f0f2f5; min-height:100vh; }
+  .header { background:#1a1a2e; color:#fff; padding:12px 28px; display:flex; align-items:center; gap:12px; }
+  .header h1 { font-size:17px; }
+  .header .badge { background:#e8b339; color:#1a1a2e; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:700; }
+  .header a { color:#aab; text-decoration:none; font-size:13px; margin-left:auto; }
+  .header a:hover { color:#fff; }
+  .container { max-width:1100px; margin:0 auto; padding:20px 16px; }
 
-  /* Empty state */
-  .empty { text-align: center; padding: 80px 20px; color: #999; }
-  .empty .icon { font-size: 56px; margin-bottom: 16px; }
-  .empty h2 { font-size: 18px; color: #666; margin-bottom: 8px; }
-  .empty p { font-size: 13px; }
+  /* ── Tabs ── */
+  .tabs { display:flex; background:#fff; border-radius:10px 10px 0 0; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .tab { flex:1; padding:14px; border:none; background:#fafafa; font-size:15px; cursor:pointer; color:#666; font-weight:600; border-bottom:3px solid transparent; transition:.2s; }
+  .tab.active { background:#fff; color:#1677ff; border-bottom-color:#1677ff; }
+  .panel { display:none; background:#fff; border-radius:0 0 10px 10px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+  .panel.active { display:block; }
 
-  /* Schedule card */
-  .schedule-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); overflow: hidden; }
-  .schedule-card .title-bar { background: #fafafa; padding: 14px 20px; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; gap: 10px; }
-  .schedule-card .title-bar h2 { font-size: 16px; color: #333; }
-  .schedule-card .title-bar .count { color: #888; font-size: 13px; margin-left: auto; }
+  /* ── Tab 1: Group Cards ── */
+  .group-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:20px; }
+  .group-card { border:1px solid #e8e8e8; border-radius:10px; overflow:hidden; background:#fff; }
+  .group-card .card-head { background:linear-gradient(135deg,#1a1a2e,#2d2d44); color:#fff; padding:12px 16px; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .group-card .card-head .icon { font-size:20px; }
+  .group-card table { width:100%; border-collapse:collapse; }
+  .group-card thead th { background:#f8f9fa; padding:8px; font-size:11px; color:#888; font-weight:600; text-transform:uppercase; border-bottom:1px solid #e8e8e8; }
+  .group-card tbody td { padding:10px 8px; font-size:13px; text-align:center; border-bottom:1px solid #f0f0f0; }
+  .group-card tbody tr:last-child td { border-bottom:none; }
+  .group-card .table-num { display:inline-block; background:#fff7e6; color:#d48806; border:1px solid #ffd591; border-radius:50%; width:28px; height:28px; line-height:28px; font-size:12px; font-weight:700; }
+  .group-card .vs { color:#ccc; margin:0 6px; }
+  .group-card .team-name { font-weight:600; color:#333; }
 
-  table { width: 100%; border-collapse: collapse; }
-  thead th { background: #f5f5f5; padding: 10px 8px; font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; }
-  tbody td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid #f0f0f0; text-align: center; }
-  tbody tr:hover { background: #fafcff; }
-  tbody tr:last-child td { border-bottom: none; }
+  /* ── Tab 2: Olympic Bracket ── */
+  .bracket-wrap { overflow-x:auto; padding:20px 0; }
+  .bracket { display:flex; justify-content:center; gap:0; min-width:700px; }
+  .bracket-col { display:flex; flex-direction:column; justify-content:space-around; flex:1; max-width:220px; position:relative; }
+  .bracket-col .col-title { text-align:center; font-size:12px; font-weight:700; color:#888; letter-spacing:1px; margin-bottom:12px; }
+  .bracket-slot { position:relative; display:flex; align-items:center; margin:8px 0; height:52px; }
+  .bracket-slot .connector { width:24px; flex-shrink:0; position:relative; }
+  .bracket-slot .connector::after { content:''; position:absolute; right:0; top:50%; width:24px; height:2px; background:#c0c0c0; }
+  .bracket-slot:first-child .connector::before,
+  .bracket-slot:last-child  .connector::before { content:''; position:absolute; right:0; top:50%; width:2px; height:50%; background:#c0c0c0; }
+  .bracket-slot:first-child .connector::before { top:50%; }
+  .bracket-slot:last-child  .connector::before { top:0; }
+  .slot-card { flex:1; border:2px solid #d9d9d9; border-radius:8px; padding:8px 10px; background:#fff; display:flex; flex-direction:column; gap:2px; }
+  .slot-card .player { font-size:13px; font-weight:600; color:#333; }
+  .slot-card .player.tbd { color:#bbb; font-style:italic; }
+  .slot-card .score { font-size:11px; color:#aaa; }
+  .champion-col { display:flex; align-items:center; justify-content:center; }
+  .champion-box { text-align:center; border:3px solid #e8b339; border-radius:12px; padding:20px 16px; background:linear-gradient(135deg,#fffbe6,#fff7cc); min-width:100px; }
+  .champion-box .trophy { font-size:36px; }
+  .champion-box .name { font-size:16px; font-weight:800; color:#1a1a2e; margin-top:6px; }
 
-  .group-tag { display: inline-block; background: #e6f7ff; color: #1890ff; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-  .table-badge { display: inline-block; width: 32px; height: 32px; line-height: 32px; background: #fff7e6; color: #d48806; border: 1px solid #ffd591; border-radius: 50%; font-size: 13px; font-weight: 700; }
-  .versus { font-weight: 600; color: #333; letter-spacing: 0.5px; }
-  .vs { color: #ccc; margin: 0 8px; font-weight: 400; }
+  /* ── Empty state ── */
+  .empty { text-align:center; padding:80px 20px; color:#999; }
+  .empty .icon { font-size:56px; margin-bottom:16px; }
+  .empty h2 { font-size:18px; color:#666; margin-bottom:6px; }
+  .empty p { font-size:13px; }
 
-  .warning { margin-top: 16px; padding: 12px 16px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; font-size: 13px; color: #ad6800; }
+  /* ── Notice ── */
+  .notice { margin-top:20px; padding:14px 18px; background:#fffbe6; border:1px solid #ffe58f; border-radius:8px; font-size:13px; color:#ad6800; display:flex; align-items:center; gap:8px; }
+  .notice .icon { font-size:18px; }
 </style>
 </head>
 <body>
-
 <div class="header">
   <span>🏓</span>
-  <h1 th:text="${unitLabel}">赛事结果</h1>
-  <span class="badge" th:text="'小组赛'">小组赛</span>
-  <a href="/">← 返回生成</a>
+  <h1 th:text="${unitLabel}">赛事</h1>
+  <span class="badge">小组赛</span>
+  <a href="/">← 返回</a>
 </div>
 
 <div class="container">
 
   <!-- ====== 空状态 ====== -->
-  <div th:if="${view.rows == null or view.rows.isEmpty()}" class="empty">
+  <div th:if="${view.groups == null or view.groups.isEmpty()}" class="empty">
     <div class="icon">📋</div>
     <h2>暂无赛程数据</h2>
     <p>请先输入选手名单并点击生成</p>
   </div>
 
-  <!-- ====== 赛程表 ====== -->
-  <div th:if="${view.rows != null and !view.rows.isEmpty()}" class="schedule-card">
-    <div class="title-bar">
-      <h2>📋 小组赛赛程表</h2>
-      <span class="count" th:text="'共 ' + ${view.totalMatches} + ' 场比赛'">共 24 场</span>
+  <!-- ====== 有数据 ====== -->
+  <th:block th:if="${view.groups != null and !view.groups.isEmpty()}">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(event,'groups')">📊 小组赛赛程</button>
+      <button class="tab"        onclick="switchTab(event,'bracket')">🏆 淘汰赛对阵图</button>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th style="width:55px">球桌</th>
-          <th style="width:75px">组别</th>
-          <th style="width:45px">#</th>
-          <th style="text-align:left;padding-left:20px">对阵双方</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="row,iter : ${view.rows}">
-          <td><span class="table-badge" th:text="${row.tableNumber}">1</span></td>
-          <td><span class="group-tag" th:text="${row.groupName}">A组</span></td>
-          <td th:text="${iter.index + 1}" style="color:#aaa;font-size:12px"></td>
-          <td style="text-align:left;padding-left:20px">
-            <span class="versus">
-              <span th:text="${row.teamA}">赵云</span>
-              <span class="vs">vs</span>
-              <span th:text="${row.teamB}">张飞</span>
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <!-- TAB 1: 小组赛 -->
+    <div id="tab-groups" class="panel active">
+      <div class="group-grid">
+        <div class="group-card" th:each="gb : ${view.groups}">
+          <div class="card-head">
+            <span class="icon">🏓</span>
+            <span th:text="${gb.groupTitle}">A组</span>
+          </div>
+          <table>
+            <thead>
+              <tr><th style="width:50px">球桌</th><th style="width:55px">轮次</th><th>对阵双方</th></tr>
+            </thead>
+            <tbody>
+              <th:block th:each="rb : ${gb.rounds}">
+                <tr th:each="row,iter : ${rb.rows}">
+                  <td><span class="table-num" th:text="${row.tableNumber}">1</span></td>
+                  <td th:if="${iter.index == 0}" th:text="${rb.roundLabel}"
+                      th:attr="rowspan=${rb.rows.size()}"
+                      style="font-size:12px;color:#888;font-weight:600;vertical-align:middle">第1轮</td>
+                  <td>
+                    <span class="team-name" th:text="${row.teamA}">A</span>
+                    <span class="vs">vs</span>
+                    <span class="team-name" th:text="${row.teamB}">B</span>
+                  </td>
+                </tr>
+              </th:block>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-  <!-- 提示：淘汰赛待录入比分后生成 -->
-  <div th:if="${view.rows != null and !view.rows.isEmpty()}" class="warning">
-    ⚠ 以上为<strong>小组赛</strong>赛程。淘汰赛将在录入比分并确定出线队伍后生成。
-  </div>
+    <!-- TAB 2: 淘汰赛对阵图 (Olympic Bracket) -->
+    <div id="tab-bracket" class="panel">
+      <div class="bracket-wrap">
+        <div class="bracket">
+          <!-- 1/4决赛 -->
+          <div class="bracket-col">
+            <div class="col-title">1/4 决赛</div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+          </div>
+          <!-- 半决赛 -->
+          <div class="bracket-col">
+            <div class="col-title">半决赛</div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+          </div>
+          <!-- 决赛 -->
+          <div class="bracket-col">
+            <div class="col-title">决赛</div>
+            <div class="bracket-slot"><div class="connector"></div><div class="slot-card"><span class="player tbd">待定</span></div></div>
+          </div>
+          <!-- 冠军 -->
+          <div class="champion-col">
+            <div class="champion-box">
+              <div class="trophy">🏆</div>
+              <div class="name" style="color:#bbb;font-style:italic">待定</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <div class="notice">
+        <span class="icon">⚠</span>
+        淘汰赛对阵图将在录入小组赛比分并确定出线队伍后自动生成。
+      </div>
+    </div>
+  </th:block>
+
+  <div th:if="${view.groups != null and !view.groups.isEmpty()}" class="notice" style="margin-top:20px">
+    <span class="icon">📝</span>
+    <span>小组赛共 <strong th:text="${view.totalMatches}">0</strong> 场 · 比分录入后自动计算晋级并生成淘汰赛签表</span>
+  </div>
 </div>
 
+<script>
+  function switchTab(evt, name) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    evt.target.classList.add('active');
+  }
+</script>
 </body>
 </html>
